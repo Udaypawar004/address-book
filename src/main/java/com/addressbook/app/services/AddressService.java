@@ -7,6 +7,7 @@ import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -16,7 +17,7 @@ public class AddressService {
     @Autowired
     private AddressRepository addressRepository;
 
-    private ModelMapper modelMapper = new ModelMapper();
+    private final ModelMapper modelMapper = new ModelMapper();
     public List<AddressResponseDTO> getall(){
         List<AddressEntity> temp = addressRepository.findAll();
         List<AddressResponseDTO> ans = new ArrayList<>();
@@ -27,19 +28,32 @@ public class AddressService {
     }
 
     public AddressResponseDTO addOne(AddressResponseDTO addressDTO){
-        AddressEntity addd = modelMapper.map(addressDTO,AddressEntity.class);
-        addressRepository.save(addd);
-        System.out.println(addd);
-        return (modelMapper.map(addd, AddressResponseDTO.class));
+        AddressEntity add = modelMapper.map(addressDTO,AddressEntity.class);
+        addressRepository.save(add);
+        return (modelMapper.map(add, AddressResponseDTO.class));
     }
 
     public AddressResponseDTO updateOne(Long id , AddressResponseDTO addressResponseDTO){
         Optional<AddressEntity> existingEmployeeOpt = addressRepository.findById(id);
         if (existingEmployeeOpt.isPresent()) {
             AddressEntity existingEmployee = existingEmployeeOpt.get();
-            modelMapper.typeMap(AddressResponseDTO.class, AddressEntity.class)
-                    .addMappings(mapper -> mapper.skip(AddressEntity::setId)); // Skip ID mapping
-            modelMapper.map(addressResponseDTO, existingEmployee); // Map changes onto existing entity
+
+            // Loop through all fields in AddressResponseDTO
+            for (Field field : AddressResponseDTO.class.getDeclaredFields()) {
+                field.setAccessible(true); // Allow access to private fields
+                try {
+                    Object newValue = field.get(addressResponseDTO); // Get value from DTO
+                    if (newValue != null) { // Only update non-null fields
+                        Field entityField = AddressEntity.class.getDeclaredField(field.getName());
+                        entityField.setAccessible(true);
+                        entityField.set(existingEmployee, newValue);
+                    }
+                } catch (NoSuchFieldException | IllegalAccessException e) {
+                    e.printStackTrace(); // Handle exceptions properly in real projects
+                }
+            }
+
+            // Save updated entity
             AddressEntity updatedEmployee = addressRepository.save(existingEmployee);
             return modelMapper.map(updatedEmployee, AddressResponseDTO.class);
         }

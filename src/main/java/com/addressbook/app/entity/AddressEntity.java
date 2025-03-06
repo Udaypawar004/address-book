@@ -14,5 +14,10 @@ public class AddressEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+    private String fullName;
     private String address;
+    private String city;
+    private String state;
+    private int zipCode;
+    private long phoneNumber;
 }

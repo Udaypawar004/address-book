@@ -10,5 +10,10 @@ import lombok.NoArgsConstructor;
 public class AddressResponseDTO {
     //DTO special for Response design
     private Long id;
+    private String fullName;
     private String address;
+    private String city;
+    private String state;
+    private int zipCode;
+    private long phoneNumber;
 }
