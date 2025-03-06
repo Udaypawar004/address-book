@@ -3,6 +3,7 @@ package com.addressbook.app.services;
 import com.addressbook.app.dto.AddressResponseDTO;
 import com.addressbook.app.entity.AddressEntity;
 import com.addressbook.app.repository.AddressRepository;
+import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -12,6 +13,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
+@Slf4j
 @Service
 public class AddressService {
     @Autowired
@@ -24,11 +26,13 @@ public class AddressService {
         for (AddressEntity t : temp) {
             ans.add(modelMapper.map(t,AddressResponseDTO.class));
         }
+        log.info("All employees got successfully.");
         return (ans);
     }
 
     public AddressResponseDTO addOne(AddressResponseDTO addressDTO){
         AddressEntity add = modelMapper.map(addressDTO,AddressEntity.class);
+        log.info("Employee Added successfully");
         addressRepository.save(add);
         return (modelMapper.map(add, AddressResponseDTO.class));
     }
@@ -55,13 +59,21 @@ public class AddressService {
 
             // Save updated entity
             AddressEntity updatedEmployee = addressRepository.save(existingEmployee);
+            log.info("Employee updated successfully.");
             return modelMapper.map(updatedEmployee, AddressResponseDTO.class);
         }
+        log.error("Error while updating the employee.");
         return new AddressResponseDTO();
     }
 
     public Boolean deleteOne(Long id){
-        addressRepository.deleteById(id);
-        return (true);
+        Optional<AddressEntity> existingEmployeeOpt = addressRepository.findById(id);
+        if (existingEmployeeOpt.isPresent()) {
+            addressRepository.deleteById(id);
+            log.info("Employee deleted successfully.");
+            return true;
+        }
+        log.error("Error while deleting the id.");
+        return false;
     }
 }
